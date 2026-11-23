@@ -5,9 +5,137 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Eggly</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f7f1;
+      margin: 0;
+      padding: 24px;
+      color: #25382b;
+    }
+    .app {
+      max-width: 420px;
+      margin: 50px auto;
+      background: white;
+      padding: 28px;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px #00000012;
+    }
+    h1 { text-align: center; }
+    input, button {
+      width: 100%;
+      padding: 14px;
+      margin: 8px 0;
+      box-sizing: border-box;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+    input { border: 1px solid #ccc; }
+    button {
+      border: none;
+      background: #477a48;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .secondary {
+      background: #e8efe7;
+      color: #25382b;
+    }
+    #message { text-align: center; }
+  </style>
 </head>
 <body>
-  <h1>🥚 Eggly</h1>
-  <p>Velkommen til Eggly!</p>
+  <main class="app">
+    <h1>🥚 Eggly</h1>
+    <p style="text-align:center">
+      Din digitale hønseoversikt
+    </p>
+
+    <section id="login">
+      <input id="email" type="email"
+        placeholder="E-postadresse" autocomplete="email">
+      <input id="password" type="password"
+        placeholder="Passord" autocomplete="current-password">
+
+      <button id="signIn">Logg inn</button>
+      <button id="register" class="secondary">
+        Opprett konto
+      </button>
+    </section>
+
+    <section id="dashboard" hidden>
+      <h2>Velkommen til Eggly!</h2>
+      <p id="userEmail"></p>
+      <p>Innloggingen fungerer. Snart kommer eggregistrering!</p>
+      <button id="signOut" class="secondary">
+        Logg ut
+      </button>
+    </section>
+
+    <p id="message" role="status" aria-live="polite"></p>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from
+      "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+
+    import {
+      getAuth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      signOut,
+      onAuthStateChanged
+    } from
+      "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBx88qpsM1Q15nPXYFo7d_gS1_Dxkga7w4",
+      authDomain: "eggly-1f074.firebaseapp.com",
+      projectId: "eggly-1f074",
+      storageBucket: "eggly-1f074.firebasestorage.app",
+      messagingSenderId: "375859175029",
+      appId: "1:375859175029:web:8bc292e501f11c1d06223c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const $ = id => document.getElementById(id);
+    const message = text => $("message").textContent = text;
+
+    $("signIn").onclick = async () => {
+      try {
+        message("");
+        await signInWithEmailAndPassword(
+          auth, $("email").value.trim(), $("password").value
+        );
+      } catch (error) {
+        message("Innlogging mislyktes. Kontroller e-post og passord.");
+      }
+    };
+
+    $("register").onclick = async () => {
+      try {
+        message("");
+        await createUserWithEmailAndPassword(
+          auth, $("email").value.trim(), $("password").value
+        );
+      } catch (error) {
+        message("Kunne ikke opprette konto: " + error.code);
+      }
+    };
+
+    $("signOut").onclick = async () => {
+      await signOut(auth);
+    };
+
+    onAuthStateChanged(auth, user => {
+      $("login").hidden = !!user;
+      $("dashboard").hidden = !user;
+      $("userEmail").textContent = user ? user.email : "";
+      message("");
+    });
+  </script>
 </body>
 </html>
