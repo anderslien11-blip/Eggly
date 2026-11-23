@@ -1,0 +1,29 @@
+
+name: Publiser Eggly
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Hent koden
+        uses: actions/checkout@v4
+
+      - name: Logg inn på Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Publiser til Firebase Hosting
+        run: npx --yes firebase-tools deploy --only hosting --project eggly-1f074
