@@ -1,141 +1,54 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Eggly</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f7f1;
-      margin: 0;
-      padding: 24px;
-      color: #25382b;
-    }
-    .app {
-      max-width: 420px;
-      margin: 50px auto;
-      background: white;
-      padding: 28px;
-      border-radius: 20px;
-      box-shadow: 0 8px 30px #00000012;
-    }
-    h1 { text-align: center; }
-    input, button {
-      width: 100%;
-      padding: 14px;
-      margin: 8px 0;
-      box-sizing: border-box;
-      border-radius: 10px;
-      font-size: 16px;
-    }
-    input { border: 1px solid #ccc; }
-    button {
-      border: none;
-      background: #477a48;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .secondary {
-      background: #e8efe7;
-      color: #25382b;
-    }
-    #message { text-align: center; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#3f6d4c">
+<title>Eggly – Hønseoversikt</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#26392b;background:#f4f6f0}*{box-sizing:border-box}body{margin:0}header{background:white;border-bottom:1px solid #dce5d9}.top{max-width:850px;margin:auto;padding:15px 18px;display:flex;align-items:center;justify-content:space-between}.logo{font-size:25px;font-weight:800}main{max-width:850px;margin:22px auto;padding:0 14px}.card{background:white;border:1px solid #e6ece2;border-radius:17px;padding:20px;margin-bottom:15px;box-shadow:0 3px 14px #233d2710}h2{font-size:21px;margin:0 0 12px}h3{margin:0 0 12px}p{line-height:1.45}.muted{color:#617164}.line{border-top:1px solid #e6ece2;margin:16px 0}label{display:block;font-weight:650;margin:12px 0 5px}input,button{font:inherit;border-radius:10px;padding:12px}input{border:1px solid #bacab9;width:100%;background:white;color:#26392b}button{border:0;background:#3f6d4c;color:white;font-weight:700;cursor:pointer}button:disabled{opacity:.55;cursor:wait}.secondary{background:#e7eee6;color:#26392b}.small{font-size:14px;padding:9px 12px}.wide{width:100%;margin-top:14px}.row{display:flex;align-items:center;justify-content:space-between;gap:12px}.stat{display:grid;grid-template-columns:1fr 1fr;gap:12px}.stat>div{background:#eef4ed;border-radius:13px;padding:16px}.num{font-size:33px;font-weight:800;line-height:1.2}.category{display:flex;align-items:center;justify-content:space-between;gap:15px;border-bottom:1px solid #edf0ea;padding:12px 0}.category:last-child{border:0}.category label{margin:0;flex:1}.category input{width:100px;text-align:center;font-size:20px;font-weight:700}.history-row{padding:12px 0;border-bottom:1px solid #edf0ea}.history-row:last-child{border:0}.status{min-height:22px;margin:10px 2px;color:#a04432}.success{color:#287042}[hidden]{display:none!important}@media(max-width:450px){.card{padding:16px}.category input{width:85px}.num{font-size:29px}}
+</style>
 </head>
 <body>
-  <main class="app">
-    <h1>🥚 Eggly</h1>
-    <p style="text-align:center">
-      Din digitale hønseoversikt
-    </p>
-
-    <section id="login">
-      <input id="email" type="email"
-        placeholder="E-postadresse" autocomplete="email">
-      <input id="password" type="password"
-        placeholder="Passord" autocomplete="current-password">
-
-      <button id="signIn">Logg inn</button>
-      <button id="register" class="secondary">
-        Opprett konto
-      </button>
-    </section>
-
-    <section id="dashboard" hidden>
-      <h2>Velkommen til Eggly!</h2>
-      <p id="userEmail"></p>
-      <p>Innloggingen fungerer. Snart kommer eggregistrering!</p>
-      <button id="signOut" class="secondary">
-        Logg ut
-      </button>
-    </section>
-
-    <p id="message" role="status" aria-live="polite"></p>
-  </main>
-
-  <script type="module">
-    import { initializeApp } from
-      "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-
-    import {
-      getAuth,
-      createUserWithEmailAndPassword,
-      signInWithEmailAndPassword,
-      signOut,
-      onAuthStateChanged
-    } from
-      "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBx88qpsM1Q15nPXYFo7d_gS1_Dxkga7w4",
-      authDomain: "eggly-1f074.firebaseapp.com",
-      projectId: "eggly-1f074",
-      storageBucket: "eggly-1f074.firebasestorage.app",
-      messagingSenderId: "375859175029",
-      appId: "1:375859175029:web:8bc292e501f11c1d06223c"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-
-    const $ = id => document.getElementById(id);
-    const message = text => $("message").textContent = text;
-
-    $("signIn").onclick = async () => {
-      try {
-        message("");
-        await signInWithEmailAndPassword(
-          auth, $("email").value.trim(), $("password").value
-        );
-      } catch (error) {
-        message("Innlogging mislyktes. Kontroller e-post og passord.");
-      }
-    };
-
-    $("register").onclick = async () => {
-      try {
-        message("");
-        await createUserWithEmailAndPassword(
-          auth, $("email").value.trim(), $("password").value
-        );
-      } catch (error) {
-        message("Kunne ikke opprette konto: " + error.code);
-      }
-    };
-
-    $("signOut").onclick = async () => {
-      await signOut(auth);
-    };
-
-    onAuthStateChanged(auth, user => {
-      $("login").hidden = !!user;
-      $("dashboard").hidden = !user;
-      $("userEmail").textContent = user ? user.email : "";
-      message("");
-    });
-  </script>
+<header><div class="top"><div class="logo">🥚 Eggly</div><button id="logout" class="secondary small" hidden>Logg ut</button></div></header>
+<main>
+<section class="card" id="loginCard" hidden>
+<h2>Velkommen til Eggly</h2><p class="muted">Logg inn for å se hønseholdet ditt.</p>
+<label for="email">E-postadresse</label><input id="email" type="email" autocomplete="email">
+<label for="password">Passord</label><input id="password" type="password" autocomplete="current-password">
+<button id="loginButton" class="wide">Logg inn</button><button id="registerButton" class="wide secondary">Opprett konto</button>
+</section>
+<section class="card" id="createHouse" hidden><h2>Opprett hønsehold</h2><p class="muted">Dette gjør du bare én gang.</p><label for="houseName">Navn på hønsehold</label><input id="houseName" maxlength="100" placeholder="F.eks. Hønene våre"><button id="createHouseButton" class="wide">Opprett hønsehold</button></section>
+<div id="appContent" hidden>
+<section class="card"><div class="row"><div><p class="muted" style="margin:0">Hønsehold</p><h2 id="houseTitle" style="margin:4px 0 0"></h2></div><span>🐔</span></div><div class="line"></div><div class="stat"><div><div class="muted">Egg i dag</div><div class="num" id="todayTotal">0</div></div><div><div class="muted">Siste 7 dager</div><div class="num" id="weekTotal">0</div></div></div></section>
+<section class="card"><h2>Registrer egg</h2><label for="eggDate">Dato</label><input type="date" id="eggDate"><div id="categoryInputs"></div><div class="row" style="padding-top:13px"><strong>Totalt</strong><strong id="formTotal">0 egg</strong></div><button class="wide" id="saveEggButton">Lagre alle egg</button><p class="muted" style="font-size:13px;margin-bottom:0">Bare kategorier med antall over null lagres. Alle lagres samlet.</p></section>
+<section class="card"><h2>Historikk</h2><div id="history" class="muted">Ingen registreringer ennå.</div></section>
+</div>
+<p id="message" class="status" role="status" aria-live="polite"></p>
+</main>
+<script type="module">
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js';
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js';
+import {getFirestore,collection,query,where,limit,getDocs,addDoc,doc,writeBatch,serverTimestamp,onSnapshot} from 'https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js';
+const firebaseConfig={apiKey:'AIzaSyBx88qpsM1Q15nPXYFo7d_gS1_Dxkga7w4',authDomain:'eggly-1f074.firebaseapp.com',projectId:'eggly-1f074',storageBucket:'eggly-1f074.firebasestorage.app',messagingSenderId:'375859175029',appId:'1:375859175029:web:8bc292e501f11c1d06223c'};
+const firebaseApp=initializeApp(firebaseConfig),auth=getAuth(firebaseApp),db=getFirestore(firebaseApp),$=id=>document.getElementById(id);
+const categories=['Brune egg','Blå egg','Hvite egg','Grønne egg','Andre egg'];
+let user=null,house=null,unsubscribe=null,session=0;
+function dateLocal(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function msg(s,ok=false){$('message').textContent=s;$('message').className='status'+(ok?' success':'')}
+function resetView(){if(unsubscribe){unsubscribe();unsubscribe=null}house=null;$('loginCard').hidden=true;$('createHouse').hidden=true;$('appContent').hidden=true;$('logout').hidden=true;$('history').textContent='Ingen registreringer ennå.';msg('')}
+function drawCategories(){const root=$('categoryInputs');root.replaceChildren();for(const [i,name] of categories.entries()){const wrap=document.createElement('div');wrap.className='category';const label=document.createElement('label');label.htmlFor=`cat-${i}`;label.textContent=name;const input=document.createElement('input');input.type='number';input.min='0';input.max='10000';input.step='1';input.inputMode='numeric';input.value='0';input.id=`cat-${i}`;input.addEventListener('input',updateTotal);wrap.append(label,input);root.append(wrap)}updateTotal()}
+function readCounts(){return categories.map((name,i)=>({name,value:Number($(`cat-${i}`).value),raw:$(`cat-${i}`).value}))}
+function updateTotal(){const items=readCounts();const valid=items.every(x=>x.raw!==''&&Number.isInteger(x.value)&&x.value>=0&&x.value<=10000);$('formTotal').textContent=valid?`${items.reduce((n,x)=>n+x.value,0)} egg`:'Kontroller antall'}
+function listenEggs(houseId){if(unsubscribe)unsubscribe();unsubscribe=onSnapshot(collection(db,'henhouses',houseId,'eggs'),snap=>{const entries=snap.docs.map(d=>({id:d.id,...d.data()}));entries.sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));const today=dateLocal();const start=new Date();start.setDate(start.getDate()-6);const weekStart=dateLocal(start);$('todayTotal').textContent=entries.filter(e=>e.date===today).reduce((n,e)=>n+e.count,0);$('weekTotal').textContent=entries.filter(e=>e.date>=weekStart&&e.date<=today).reduce((n,e)=>n+e.count,0);const history=$('history');history.replaceChildren();if(!entries.length){history.textContent='Ingen registreringer ennå.';return}for(const entry of entries.slice(0,80)){const line=document.createElement('div');line.className='history-row row';const left=document.createElement('div');const strong=document.createElement('strong');strong.textContent=entry.category;const date=document.createElement('div');date.className='muted';date.textContent=entry.date;left.append(strong,date);const count=document.createElement('strong');count.textContent=`${entry.count} egg`;line.append(left,count);history.append(line)}},error=>msg('Kunne ikke hente egg: '+error.code))}
+async function loadHouse(activeUser,version){try{const q=query(collection(db,'henhouses'),where('members','array-contains',activeUser.uid),limit(1));const snap=await getDocs(q);if(version!==session)return;if(snap.empty){$('createHouse').hidden=false;return}const found=snap.docs[0];house={id:found.id,...found.data()};$('houseTitle').textContent=house.name;$('appContent').hidden=false;listenEggs(house.id)}catch(e){if(version===session)msg('Kunne ikke hente hønsehold: '+e.code)}}
+$('loginButton').onclick=async()=>{try{msg('');await signInWithEmailAndPassword(auth,$('email').value.trim(),$('password').value)}catch(e){msg('Innlogging mislyktes. Kontroller e-post og passord.')}};
+$('registerButton').onclick=async()=>{try{msg('');await createUserWithEmailAndPassword(auth,$('email').value.trim(),$('password').value)}catch(e){msg('Kunne ikke opprette konto: '+e.code)}};
+$('logout').onclick=async()=>{try{await signOut(auth)}catch(e){msg('Kunne ikke logge ut: '+e.code)}};
+onAuthStateChanged(auth,async current=>{const version=++session;resetView();user=current;if(!current){$('loginCard').hidden=false;return}$('logout').hidden=false;await loadHouse(current,version)});
+$('createHouseButton').onclick=async()=>{if(!user||house)return;const name=$('houseName').value.trim();if(!name||name.length>100){msg('Skriv inn navn på hønseholdet.');return}const activeUser=user,version=session,button=$('createHouseButton');button.disabled=true;try{const ref=await addDoc(collection(db,'henhouses'),{name,ownerId:activeUser.uid,members:[activeUser.uid],createdAt:serverTimestamp()});if(version!==session)return;house={id:ref.id,name};$('createHouse').hidden=true;$('houseTitle').textContent=name;$('appContent').hidden=false;msg('Hønseholdet er opprettet.',true);listenEggs(ref.id)}catch(e){msg('Kunne ikke opprette hønsehold: '+e.code)}finally{button.disabled=false}};
+$('saveEggButton').onclick=async()=>{if(!user||!house)return;const date=$('eggDate').value;const counts=readCounts();if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){msg('Velg en gyldig dato.');return}if(counts.some(x=>x.raw===''||!Number.isInteger(x.value)||x.value<0||x.value>10000)){msg('Antall må være hele tall fra 0 til 10000.');return}const selected=counts.filter(x=>x.value>0);if(!selected.length){msg('Skriv inn minst ett egg før du lagrer.');return}const button=$('saveEggButton');button.disabled=true;try{const batch=writeBatch(db);for(const item of selected){const ref=doc(collection(db,'henhouses',house.id,'eggs'));batch.set(ref,{date,category:item.name,count:item.value,createdBy:user.uid,createdAt:serverTimestamp()})}await batch.commit();for(let i=0;i<categories.length;i++)$(`cat-${i}`).value='0';updateTotal();msg(`${selected.reduce((n,x)=>n+x.value,0)} egg lagret!`,true)}catch(e){msg('Kunne ikke lagre egg: '+e.code)}finally{button.disabled=false}};
+$('eggDate').value=dateLocal();drawCategories();
+</script>
 </body>
 </html>
