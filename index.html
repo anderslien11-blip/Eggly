@@ -24,6 +24,9 @@
 @media(max-width:370px){.navtabs button{font-size:10px}.category label{font-size:14px}.category input{width:57px}}
 .navtabs #flockTab{display:none}.navtabs #feedTab{display:block;order:4}
 .navtabs{grid-template-columns:repeat(6,minmax(0,1fr))}.navtabs #financeTab{display:flex;order:5}.navtabs #settingsTab{order:6}.navtabs button:not(#flockTab):not(#statsTab){display:flex;align-items:center;justify-content:center;min-width:0}.menu-png{width:32px;height:32px;object-fit:contain;display:block;flex-shrink:0}.navtabs .menu-png{width:clamp(24px,8vw,36px);height:clamp(24px,8vw,36px)}.navtabs button:not(.active) .menu-png{opacity:.75}.more-links button{display:flex;align-items:center;justify-content:center;gap:8px}.icon-heading{display:flex;align-items:center;gap:9px}.icon-heading .menu-png{width:25px;height:25px}
+
+/* Prevent double-tap zoom on buttons; preserve pinch zoom. */
+button { touch-action: manipulation; }
 </style>
 </head>
 <body>
