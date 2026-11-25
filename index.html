@@ -208,7 +208,7 @@ function listenEggs(houseId){
   if(unsubscribe)unsubscribe();
   todayEntries=[];eggHistoryState='loading';renderTodayBreakdown();renderSelectedEggHistory();
   const version=session;
-  unsubscribe=onSnapshot(collection(db,'henhouses',houseId,'eggs'),{includeMetadataChanges:true},snap=>{
+  unsubscribe=onSnapshot(collection(db,'henhouses',houseId,'eggs'),snap=>{
     if(version!==session||house?.id!==houseId)return;
     eggHistoryState=snap.metadata.fromCache||snap.metadata.hasPendingWrites?'cache':'server';
     const entries=snap.docs.map(d=>({id:d.id,...d.data()}));eggRecords=entries;renderSelectedEggHistory();renderOrders();renderStock();renderStats();
