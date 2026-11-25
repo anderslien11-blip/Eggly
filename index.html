@@ -27,6 +27,12 @@
 
 /* Prevent double-tap zoom on buttons; preserve pinch zoom. */
 button { touch-action: manipulation; }
+/* Selected-date history and keyboard-aware navigation */
+.category-name{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}
+.category-history{font-size:12px;font-weight:400;color:#617164}
+#selectedEggTotal{font-size:13px;margin:10px 0 0;color:#617164}
+.navtabs{bottom:var(--verp-nav-offset,0px)}
+html.verp-keyboard .navtabs{visibility:hidden;pointer-events:none}
 </style>
 </head>
 <body>
@@ -52,7 +58,7 @@ button { touch-action: manipulation; }
 </div>
 <div id="layingPage" hidden>
 
-<section class="card"><div class="row"><h2 style="margin:0">🥚 Registrer egg</h2><button class="secondary small" id="manageCategoriesButton" type="button">⚙️ Eggtyper</button></div><p class="muted" style="font-size:14px">Trykk +/− eller skriv antall direkte. Minus brukes til å korrigere feilregistreringer.</p><label for="eggDate">Dato for eggene</label><input type="date" id="eggDate"><div id="categoryInputs"></div><div class="row" style="padding-top:13px"><strong>Totalt</strong><strong id="formTotal">0 egg</strong></div><button class="wide" id="saveEggButton">Lagre alle egg</button><p class="muted" style="font-size:13px;margin-bottom:0">Positive tall legger til egg. Negative tall trekker fra tidligere registreringer. Alle lagres samlet.</p></section>
+<section class="card"><div class="row"><h2 style="margin:0">🥚 Registrer egg</h2><button class="secondary small" id="manageCategoriesButton" type="button">⚙️ Eggtyper</button></div><p class="muted" style="font-size:14px">Trykk +/− eller skriv antall direkte. Minus brukes til å korrigere feilregistreringer.</p><label for="eggDate">Dato for eggene</label><input type="date" id="eggDate"><p id="selectedEggTotal" role="status">Henter registreringer …</p><div id="categoryInputs"></div><div class="row" style="padding-top:13px"><strong>Totalt</strong><strong id="formTotal">0 egg</strong></div><button class="wide" id="saveEggButton">Lagre alle egg</button><p class="muted" style="font-size:13px;margin-bottom:0">Positive tall legger til egg. Negative tall trekker fra tidligere registreringer. Alle lagres samlet.</p></section>
 <section class="card" id="manageCategories" hidden><h2>Eggtyper og farger</h2><p class="muted">Legg til, endre navn eller farge, og velg hvilke egg som inngår i salgslageret. Valget gjelder nye registreringer for hele hønseholdet. Tidligere registreringer beholdes. Bruk lagerjustering for egg som allerede ligger på lager.</p><div id="manageCategoryRows"></div><button class="secondary wide" id="addCategoryButton" type="button">+ Legg til eggtype</button><div class="manage-actions"><button id="saveCategoriesButton" type="button">Lagre eggtyper</button><button class="secondary" id="cancelCategoriesButton" type="button">Avbryt</button></div></section><section class="card"><div class="row"><div><p class="muted" style="margin:0">Hønsehold</p><h2 id="houseTitle" style="margin:4px 0 0"></h2></div><span>🐔</span></div><div class="line"></div><div class="stat"><div><div class="muted">Egg i dag</div><div class="num" id="todayTotal">0</div></div><div><div class="muted">Siste 7 dager</div><div class="num" id="weekTotal">0</div></div><div><div class="muted">Siste 30 dager</div><div class="num" id="monthTotal">0</div></div><div><div class="muted">Siste 365 dager</div><div class="num" id="yearTotal">0</div></div></div></section><section class="card"><h2>🥚 Registrert i dag</h2><p class="muted" style="font-size:14px">Antall egg per type i dag, inkludert eventuelle korrigeringer.</p><div id="todayBreakdown" class="muted">Ingen egg registrert i dag.</div><div class="row" style="padding-top:14px"><strong>Totalt i dag</strong><strong id="todayBreakdownTotal">0 egg</strong></div></section>
 </div>
 <div id="feedPage" hidden><section class="card"><h2>Ta ut fôr</h2><select id="quickUnit" aria-label="Velg fôrenhet"></select><button id="quickFeed" class="wide">Ta ut standardenhet</button><p class="mini" id="quickFeedInfo"></p></section>
@@ -99,28 +105,37 @@ function onSnapshot(ref,next,fail){const key=ref.path,version=session;return fir
 window.addEventListener('online',syncStatus);window.addEventListener('offline',syncStatus);
 
 let categories=[];let categoriesReady=false;let houseUnsub=null,saleFlags={},saleReady=false;let unsubscribeSettings=null;
-let user=null,house=null,unsubscribe=null,unsubscribeFeed=null,unsubscribeOrders=null,session=0;let orderRecords=[],eggRecords=[];
+let user=null,house=null,unsubscribe=null,unsubscribeFeed=null,unsubscribeOrders=null,session=0;let orderRecords=[],eggRecords=[];let eggHistoryState="loading";
 let todayEntries=[];let stockRecords=[],flockRecords=[],financeRecords=[],feedRecords=[],stockUnsub=null,flockUnsub=null,financeUnsub=null;
 function showPage(page){for(const name of ['overview','laying','feed','orders','flock','finance','stats','settings']){$(name+'Page').hidden=name!==page;$(name+'Tab').className=name===page?'active':'secondary'}if(['flock','stats'].includes(page))$('settingsTab').className='active';window.scrollTo({top:0,behavior:'instant'})}
 $('overviewTab').onclick=()=>showPage('overview');$('layingTab').onclick=()=>showPage('laying');$('feedTab').onclick=()=>showPage('feed');$('ordersTab').onclick=()=>showPage('orders');$('goOrders').onclick=()=>showPage('orders');$('goLaying').onclick=()=>showPage('laying');$('goFeed').onclick=()=>showPage('feed');for(const n of ['flock','finance','stats','settings'])$(n+'Tab').onclick=()=>showPage(n);$('goStock').onclick=()=>showPage('settings');$('goCategories').onclick=()=>{showPage('laying');openCategoryEditor()};
 function dateLocal(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function msg(s,ok=false){$('message').textContent=s;$('message').className='status'+(ok?' success':'')}
-function resetView(){if(houseUnsub){houseUnsub();houseUnsub=null}saleFlags={};saleReady=false;$("accountEmail").textContent="";syncStates.clear();lastSync=null;syncStatus();if(unsubscribeSettings){unsubscribeSettings();unsubscribeSettings=null}if(unsubscribe){unsubscribe();unsubscribe=null}if(unsubscribeFeed){unsubscribeFeed();unsubscribeFeed=null}if(unsubscribeOrders){unsubscribeOrders();unsubscribeOrders=null}for(const key of ["stockUnsub","flockUnsub","financeUnsub"]){if(key==="stockUnsub"&&stockUnsub){stockUnsub();stockUnsub=null}if(key==="flockUnsub"&&flockUnsub){flockUnsub();flockUnsub=null}if(key==="financeUnsub"&&financeUnsub){financeUnsub();financeUnsub=null}}stockRecords=[];flockRecords=[];financeRecords=[];feedRecords=[];orderRecords=[];eggRecords=[];house=null;$('loginCard').hidden=true;$('createHouse').hidden=true;$('appContent').hidden=true;$('logout').hidden=true;$('todayBreakdown').textContent='Ingen egg registrert i dag.';$('todayBreakdownTotal').textContent='0 egg';todayEntries=[];categories=[];categoriesReady=false;$('manageCategoryRows').replaceChildren();drawCategories();$('manageCategories').hidden=true;msg('')}
+function resetView(){if(houseUnsub){houseUnsub();houseUnsub=null}saleFlags={};saleReady=false;$("accountEmail").textContent="";syncStates.clear();lastSync=null;syncStatus();if(unsubscribeSettings){unsubscribeSettings();unsubscribeSettings=null}if(unsubscribe){unsubscribe();unsubscribe=null}if(unsubscribeFeed){unsubscribeFeed();unsubscribeFeed=null}if(unsubscribeOrders){unsubscribeOrders();unsubscribeOrders=null}for(const key of ["stockUnsub","flockUnsub","financeUnsub"]){if(key==="stockUnsub"&&stockUnsub){stockUnsub();stockUnsub=null}if(key==="flockUnsub"&&flockUnsub){flockUnsub();flockUnsub=null}if(key==="financeUnsub"&&financeUnsub){financeUnsub();financeUnsub=null}}stockRecords=[];flockRecords=[];financeRecords=[];feedRecords=[];orderRecords=[];eggRecords=[];eggHistoryState="loading";house=null;$('loginCard').hidden=true;$('createHouse').hidden=true;$('appContent').hidden=true;$('logout').hidden=true;$('todayBreakdown').textContent='Ingen egg registrert i dag.';$('todayBreakdownTotal').textContent='0 egg';todayEntries=[];categories=[];categoriesReady=false;$('manageCategoryRows').replaceChildren();drawCategories();$('manageCategories').hidden=true;msg('')}
 function drawCategories(){
   const root=$('categoryInputs');root.replaceChildren();$('manageCategoriesButton').disabled=!categoriesReady;$('saveEggButton').disabled=!categoriesReady||!categories.length;if(!categories.length){if(!categoriesReady)root.textContent="Henter eggtyper …";else{const b=document.createElement('button');b.type='button';b.className='secondary wide';b.textContent='Opprett din første eggtype';b.onclick=()=>openCategoryEditor();root.append(b)}}
   for(const [i,item] of categories.entries()){
     const wrap=document.createElement('div');wrap.className='category';
     const label=document.createElement('label');label.htmlFor=`cat-${i}`;
     const dot=document.createElement('span');dot.className='dot';dot.style.backgroundColor=item.color;
-    const name=document.createElement('span');name.textContent=item.name;label.append(dot,name);
+    const name=document.createElement('span');name.textContent=item.name;const nameBox=document.createElement("span");nameBox.className="category-name";const history=document.createElement("span");history.className="category-history";history.id=`cat-history-${i}`;nameBox.append(name,history);label.append(dot,nameBox);
     const counter=document.createElement('div');counter.className='counter';
     const input=document.createElement('input');input.type='number';input.min='-10000';input.max='10000';input.step='1';input.inputMode='numeric';input.value='0';input.id=`cat-${i}`;input.setAttribute('aria-label',`Antall ${item.name}`);input.addEventListener('input',updateTotal);
     const minus=document.createElement('button');minus.className='stepper';minus.type='button';minus.textContent='−';minus.setAttribute('aria-label',`Trekk fra ${item.name}`);minus.onclick=()=>{input.value=String(Math.max(-10000,(parseInt(input.value,10)||0)-1));updateTotal()};
     const plus=document.createElement('button');plus.className='stepper';plus.type='button';plus.textContent='+';plus.setAttribute('aria-label',`Legg til ${item.name}`);plus.onclick=()=>{input.value=String(Math.min(10000,(parseInt(input.value,10)||0)+1));updateTotal()};
     counter.append(minus,input,plus);wrap.append(label,counter);root.append(wrap)
   }
-  updateTotal()
+  updateTotal();renderSelectedEggHistory()
 }
+function renderSelectedEggHistory(){
+  const date=$('eggDate').value, totals=new Map();
+  for(const e of eggRecords){if(e.date===date&&typeof e.category==='string'&&Number.isFinite(e.count))totals.set(e.category,(totals.get(e.category)||0)+e.count)}
+  const ready=eggHistoryState==='server'||eggHistoryState==='cache';
+  const total=[...totals.values()].reduce((a,b)=>a+b,0);
+  $('selectedEggTotal').textContent=!date?'Velg dato.':!ready?(eggHistoryState==='error'?'Kunne ikke hente registreringer.':'Henter registreringer …'):(totals.size?`Allerede registrert: ${total} egg`:'Ingen registreringer funnet for valgt dato')+(eggHistoryState==='cache'?' (lokale data, ikke bekreftet)':'');
+  categories.forEach((c,i)=>{const el=$(`cat-history-${i}`);if(el)el.textContent=ready&&date?`Registrert: ${totals.get(c.name)||0} stk.`:'Registrert: —'});
+}
+$('eggDate').addEventListener('change',renderSelectedEggHistory);
 function readCounts(){return categories.map((item,i)=>({name:item.name,value:Number($(`cat-${i}`).value),raw:$(`cat-${i}`).value}))}
 function updateTotal(){const items=readCounts();const valid=items.every(x=>x.raw!==''&&Number.isInteger(x.value)&&x.value>=-10000&&x.value<=10000);$('formTotal').textContent=valid?`${items.reduce((n,x)=>n+x.value,0)} egg`:'Kontroller antall'}
 function openCategoryEditor(){
@@ -191,9 +206,12 @@ function listenHouseFlags(id){if(houseUnsub)houseUnsub();saleReady=false;houseUn
 function listenEggs(houseId){
   listenHouseFlags(houseId);
   if(unsubscribe)unsubscribe();
-  todayEntries=[];renderTodayBreakdown();
-  unsubscribe=onSnapshot(collection(db,'henhouses',houseId,'eggs'),snap=>{
-    const entries=snap.docs.map(d=>({id:d.id,...d.data()}));eggRecords=entries;renderOrders();renderStock();renderStats();
+  todayEntries=[];eggHistoryState='loading';renderTodayBreakdown();renderSelectedEggHistory();
+  const version=session;
+  unsubscribe=onSnapshot(collection(db,'henhouses',houseId,'eggs'),{includeMetadataChanges:true},snap=>{
+    if(version!==session||house?.id!==houseId)return;
+    eggHistoryState=snap.metadata.fromCache||snap.metadata.hasPendingWrites?'cache':'server';
+    const entries=snap.docs.map(d=>({id:d.id,...d.data()}));eggRecords=entries;renderSelectedEggHistory();renderOrders();renderStock();renderStats();
     entries.sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
     const today=dateLocal();
     const start=new Date();start.setDate(start.getDate()-6);const weekStart=dateLocal(start);
@@ -208,7 +226,7 @@ function listenEggs(houseId){
     $('ovMonth').textContent=$('monthTotal').textContent;
     $('ovYear').textContent=$('yearTotal').textContent;
     todayEntries=entries.filter(e=>e.date===today);renderTodayBreakdown();
-  },error=>msg('Kunne ikke hente egg: '+error.code));
+  },error=>{if(version!==session)return;eggHistoryState='error';renderSelectedEggHistory();msg('Kunne ikke hente egg: '+error.code)});
 }
 async function loadHouse(activeUser,version){try{const q=query(collection(db,'henhouses'),where('members','array-contains',activeUser.uid),limit(1));const snap=await getDocs(q);if(version!==session)return;if(snap.empty){if(snap.metadata.fromCache){msg('Kan ikke bekrefte hønsehold uten nett. Koble til internett før du oppretter et nytt.');return}$('createHouse').hidden=false;return}const found=snap.docs[0];house={id:found.id,...found.data()};$('houseTitle').textContent=house.name;$('overviewHouseTitle').textContent=house.name;$('appContent').hidden=false;listenEggs(house.id);listenFeed(house.id);listenOrders(house.id);listenExtras(house.id)}catch(e){if(version===session)msg('Kunne ikke hente hønsehold: '+e.code)}}
 
@@ -381,6 +399,30 @@ $('exportBackup').onclick=async()=>{if(!house||!user)return;const btn=$('exportB
       el.dispatchEvent(new Event('input', {bubbles:true}));
     }
   });
+})();
+</script>
+<script>
+(() => {
+  const root=document.documentElement, vv=window.visualViewport;
+  const editable=el=>el instanceof HTMLTextAreaElement || (el instanceof HTMLInputElement && !['button','submit','checkbox','radio','range','color','file','hidden'].includes(el.type));
+  let baseline=vv?.height||window.innerHeight, timers=[];
+  function refresh(){
+    const focused=editable(document.activeElement), height=vv?.height||window.innerHeight;
+    const inset=vv?Math.max(0,window.innerHeight-vv.height-vv.offsetTop):0;
+    const keyboard=focused&&(baseline-height>120||inset>120);
+    root.classList.toggle('verp-keyboard',keyboard);
+    if(!focused && inset<80)baseline=height;
+    root.style.setProperty('--verp-nav-offset',keyboard||!vv||Math.abs(vv.scale-1)>0.02?'0px':`${inset}px`);
+  }
+  function settle(){timers.forEach(clearTimeout);refresh();timers=[80,250,500,900].map(ms=>setTimeout(refresh,ms));}
+  document.addEventListener('focusin',settle);
+  document.addEventListener('focusout',settle);
+  window.addEventListener('resize',settle);
+  window.addEventListener('pageshow',settle);
+  vv?.addEventListener('resize',settle);
+  vv?.addEventListener('scroll',refresh);
+  window.addEventListener('orientationchange',()=>{baseline=vv?.height||window.innerHeight;settle()});
+  refresh();
 })();
 </script>
 <script>if ('serviceWorker' in navigator && window.top === window.self) navigator.serviceWorker.register('/sw.js').catch(console.warn);
