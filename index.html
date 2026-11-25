@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#00562d">
 <link rel="icon" type="image/png" href="verp-gronn-ikon.png">
-<link rel="apple-touch-icon" href="verp-gronn-ikon.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/verp-icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>VERP – Hønseoversikt</title>
@@ -77,7 +78,7 @@
 <section class="card"><h2 class="icon-heading"><img class="menu-png" src="lager.png" alt="" aria-hidden="true">Lagerjustering og uttak</h2><p class="section-note">Første gang: registrer faktisk antall egg dere har nå som «Startbeholdning». VERP regner deretter automatisk inn nye egg, lageruttak og nye ordre. Tidligere eggregistreringer og ordre blir ikke trukket inn i startbeholdningen.</p><div class="inline-fields"><div><label for="stockType">Hendelse</label><select id="stockType"><option value="opening">Startbeholdning (settes én gang)</option><option value="adjust">Lagerjustering (+/−)</option><option value="use">Eget bruk / gis bort / svinn (trekk fra)</option></select></div><div><label for="stockDate">Dato</label><input id="stockDate" type="date"></div><div><label for="stockQty">Antall egg</label><input id="stockQty" type="number" step="1" value="0" min="-100000" max="100000"></div><div><label for="stockReason">Årsak</label><select id="stockReason"><option value="count">Opptelling</option><option value="own">Eget bruk</option><option value="gift">Gitt bort</option><option value="waste">Svinn</option><option value="correction">Korrigering</option></select></div><div class="full"><label for="stockNote">Merknad</label><input id="stockNote" maxlength="200"></div></div><button id="saveStock" class="wide">Lagre lagerbevegelse</button><p class="mini" id="stockOpeningNote">Ingen startbeholdning registrert.</p></section>
 <section class="card"><h2>Lagerhistorikk</h2><div id="stockHistory" class="muted">Ingen lagerbevegelser.</div></section>
 <section class="card"><h2>🌐 Kundebestilling</h2><p>De fire pakningene er 10/30 miks og 10/30 hvite. En offentlig bestillingsside med automatisk mottak, nettbetaling og pushvarsler krever ytterligere sikkerhetsoppsett. Dette er ikke aktivert i denne versjonen.</p><p class="mini">Vi kan fortsatt registrere bestillinger manuelt i Salg/ordre, med automatisk beregnet ventetid.</p></section>
-<section class="card"><h2>Standard fôrenhet og salgspriser</h2><label for="standardKg">Kg per sekk/boks</label><input id="standardKg" type="number" min="0.01" max="100000" step="0.01" value="21"><div id="feedUnitSettings"></div><button id="addFeedUnit" class="secondary wide">+ Legg til fôrenhet</button><div id="priceSettings"></div><button id="addSaleProduct" class="secondary wide">+ Legg til salgsprodukt</button><button id="saveDefaults" class="wide">Lagre standardverdier</button><p class="mini">Innstillingene følger brukerkontoen.</p></section><section class="card"><h2>Datasikkerhet</h2><p id="syncStatus" class="section-note" role="status" aria-live="polite">Henter data …</p><p class="mini">Last ned en uavhengig kopi av alle registreringer i dette hønseholdet og dine eggtypeinnstillinger. Krever nett. Oppbevar filen sikkert; den kan inneholde kundeopplysninger.</p><button id="exportBackup" class="wide">Last ned sikkerhetskopi (JSON)</button><p id="backupStatus" role="status" class="mini"></p><p id="storageStatus" class="mini"></p><button id="checkStorage" class="secondary wide">Kontroller lokal lagringsplass</button></section><section class="card"><h2>Eggtyper</h2><p class="mini">Administreres som før i Verpekassa. Ingen tidligere innstillinger er endret.</p><button id="goCategories" class="secondary wide">Åpne eggtyper</button></section>
+<section class="card"><h2>Standard fôrenhet og salgspriser</h2><label for="standardKg">Kg per sekk/boks</label><input id="standardKg" type="number" min="0.01" max="100000" step="0.01" value="21"><div id="feedUnitSettings"></div><button id="addFeedUnit" class="secondary wide">+ Legg til fôrenhet</button><div id="priceSettings"></div><button id="addSaleProduct" class="secondary wide">+ Legg til salgsprodukt</button><button id="saveDefaults" class="wide">Lagre standardverdier</button><p class="mini">Innstillingene følger brukerkontoen.</p></section><section class="card" id="installCard" hidden><h2>Installer VERP</h2><p>Få VERP på hjemskjermen.</p><a href="https://eggly-1f074.web.app/install.html" target="_blank" rel="noopener" style="display:block;text-align:center;background:#00562d;color:white;padding:12px;border-radius:10px;text-decoration:none;font-weight:700">Installer VERP</a></section><section class="card"><h2>Datasikkerhet</h2><p id="syncStatus" class="section-note" role="status" aria-live="polite">Henter data …</p><p class="mini">Last ned en uavhengig kopi av alle registreringer i dette hønseholdet og dine eggtypeinnstillinger. Krever nett. Oppbevar filen sikkert; den kan inneholde kundeopplysninger.</p><button id="exportBackup" class="wide">Last ned sikkerhetskopi (JSON)</button><p id="backupStatus" role="status" class="mini"></p><p id="storageStatus" class="mini"></p><button id="checkStorage" class="secondary wide">Kontroller lokal lagringsplass</button></section><section class="card"><h2>Eggtyper</h2><p class="mini">Administreres som før i Verpekassa. Ingen tidligere innstillinger er endret.</p><button id="goCategories" class="secondary wide">Åpne eggtyper</button></section>
 </div>
 </div>
 <p id="message" class="status" role="status" aria-live="polite"></p>
@@ -91,20 +92,19 @@ const firebaseApp=initializeApp(firebaseConfig),auth=getAuth(firebaseApp),$=id=>
 let persistent=true,db;try{db=initializeFirestore(firebaseApp,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager(),cacheSizeBytes:20*1024*1024})})}catch(e){persistent=false;db=initializeFirestore(firebaseApp,{localCache:memoryLocalCache()})}
 const syncStates=new Map();let lastSync=null;
 function syncStatus(){const el=$('syncStatus');if(!el)return;const states=[...syncStates.values()];const pending=states.some(x=>x.pending),error=states.some(x=>x.error),ready=states.length===8&&states.every(x=>!x.cache&&!x.pending&&!x.error);if(ready)lastSync=new Date();el.textContent=(error?'Synkroniseringsfeil – kontroller forbindelsen og tilgang.':pending?'Registreringer venter på bekreftelse fra Firebase.':ready?'Alle viste datasett bekreftet av Firebase.':!navigator.onLine?'Frakoblet – viser tilgjengelige lokale data.':'Henter data / viser mellomlagrede data.')+(lastSync?' Sist bekreftet: '+lastSync.toLocaleTimeString('nb-NO'):'')+(!persistent?' Lokal vedvarende lagring kunne ikke aktiveres.':'');}
-function onSnapshot(ref,next,fail){const key=ref.path;return firebaseSnapshot(ref,{includeMetadataChanges:true},snap=>{syncStates.set(key,{pending:snap.metadata.hasPendingWrites,cache:snap.metadata.fromCache});syncStatus();next(snap)},e=>{syncStates.set(key,{error:true});syncStatus();fail(e)})}
+function onSnapshot(ref,next,fail){const key=ref.path,version=session;return firebaseSnapshot(ref,{includeMetadataChanges:true},snap=>{if(version!==session)return;syncStates.set(key,{pending:snap.metadata.hasPendingWrites,cache:snap.metadata.fromCache});syncStatus();next(snap)},e=>{if(version!==session)return;syncStates.set(key,{error:true});syncStatus();fail(e)})}
 window.addEventListener('online',syncStatus);window.addEventListener('offline',syncStatus);
 
-const defaults=[{name:'Brune',color:'#b9845b'},{name:'Dverg',color:'#e0e1da'},{name:'Krøll',color:'#cba58b'},{name:'Grønne',color:'#92b99b'},{name:'Blå',color:'#8ec5d9'},{name:'Hvite',color:'#e9e6d8'}];
-let categories=defaults.map(c=>({...c}));let houseUnsub=null,saleFlags={},saleReady=false;let unsubscribeSettings=null;
+let categories=[];let categoriesReady=false;let houseUnsub=null,saleFlags={},saleReady=false;let unsubscribeSettings=null;
 let user=null,house=null,unsubscribe=null,unsubscribeFeed=null,unsubscribeOrders=null,session=0;let orderRecords=[],eggRecords=[];
 let todayEntries=[];let stockRecords=[],flockRecords=[],financeRecords=[],feedRecords=[],stockUnsub=null,flockUnsub=null,financeUnsub=null;
 function showPage(page){for(const name of ['overview','laying','feed','orders','flock','finance','stats','settings']){$(name+'Page').hidden=name!==page;$(name+'Tab').className=name===page?'active':'secondary'}if(['flock','stats'].includes(page))$('settingsTab').className='active';window.scrollTo({top:0,behavior:'instant'})}
 $('overviewTab').onclick=()=>showPage('overview');$('layingTab').onclick=()=>showPage('laying');$('feedTab').onclick=()=>showPage('feed');$('ordersTab').onclick=()=>showPage('orders');$('goOrders').onclick=()=>showPage('orders');$('goLaying').onclick=()=>showPage('laying');$('goFeed').onclick=()=>showPage('feed');for(const n of ['flock','finance','stats','settings'])$(n+'Tab').onclick=()=>showPage(n);$('goStock').onclick=()=>showPage('settings');$('goCategories').onclick=()=>{showPage('laying');openCategoryEditor()};
 function dateLocal(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function msg(s,ok=false){$('message').textContent=s;$('message').className='status'+(ok?' success':'')}
-function resetView(){if(houseUnsub){houseUnsub();houseUnsub=null}saleFlags={};saleReady=false;$("accountEmail").textContent="";syncStates.clear();lastSync=null;syncStatus();if(unsubscribeSettings){unsubscribeSettings();unsubscribeSettings=null}if(unsubscribe){unsubscribe();unsubscribe=null}if(unsubscribeFeed){unsubscribeFeed();unsubscribeFeed=null}if(unsubscribeOrders){unsubscribeOrders();unsubscribeOrders=null}for(const key of ["stockUnsub","flockUnsub","financeUnsub"]){if(key==="stockUnsub"&&stockUnsub){stockUnsub();stockUnsub=null}if(key==="flockUnsub"&&flockUnsub){flockUnsub();flockUnsub=null}if(key==="financeUnsub"&&financeUnsub){financeUnsub();financeUnsub=null}}stockRecords=[];flockRecords=[];financeRecords=[];feedRecords=[];orderRecords=[];eggRecords=[];house=null;$('loginCard').hidden=true;$('createHouse').hidden=true;$('appContent').hidden=true;$('logout').hidden=true;$('todayBreakdown').textContent='Ingen egg registrert i dag.';$('todayBreakdownTotal').textContent='0 egg';todayEntries=[];$('manageCategories').hidden=true;msg('')}
+function resetView(){if(houseUnsub){houseUnsub();houseUnsub=null}saleFlags={};saleReady=false;$("accountEmail").textContent="";syncStates.clear();lastSync=null;syncStatus();if(unsubscribeSettings){unsubscribeSettings();unsubscribeSettings=null}if(unsubscribe){unsubscribe();unsubscribe=null}if(unsubscribeFeed){unsubscribeFeed();unsubscribeFeed=null}if(unsubscribeOrders){unsubscribeOrders();unsubscribeOrders=null}for(const key of ["stockUnsub","flockUnsub","financeUnsub"]){if(key==="stockUnsub"&&stockUnsub){stockUnsub();stockUnsub=null}if(key==="flockUnsub"&&flockUnsub){flockUnsub();flockUnsub=null}if(key==="financeUnsub"&&financeUnsub){financeUnsub();financeUnsub=null}}stockRecords=[];flockRecords=[];financeRecords=[];feedRecords=[];orderRecords=[];eggRecords=[];house=null;$('loginCard').hidden=true;$('createHouse').hidden=true;$('appContent').hidden=true;$('logout').hidden=true;$('todayBreakdown').textContent='Ingen egg registrert i dag.';$('todayBreakdownTotal').textContent='0 egg';todayEntries=[];categories=[];categoriesReady=false;$('manageCategoryRows').replaceChildren();drawCategories();$('manageCategories').hidden=true;msg('')}
 function drawCategories(){
-  const root=$('categoryInputs');root.replaceChildren();if(!categories.length)root.textContent="Legg til eggtyper under Eggtyper før du registrerer egg.";
+  const root=$('categoryInputs');root.replaceChildren();$('manageCategoriesButton').disabled=!categoriesReady;$('saveEggButton').disabled=!categoriesReady||!categories.length;if(!categories.length){if(!categoriesReady)root.textContent="Henter eggtyper …";else{const b=document.createElement('button');b.type='button';b.className='secondary wide';b.textContent='Opprett din første eggtype';b.onclick=()=>openCategoryEditor();root.append(b)}}
   for(const [i,item] of categories.entries()){
     const wrap=document.createElement('div');wrap.className='category';
     const label=document.createElement('label');label.htmlFor=`cat-${i}`;
@@ -121,9 +121,10 @@ function drawCategories(){
 function readCounts(){return categories.map((item,i)=>({name:item.name,value:Number($(`cat-${i}`).value),raw:$(`cat-${i}`).value}))}
 function updateTotal(){const items=readCounts();const valid=items.every(x=>x.raw!==''&&Number.isInteger(x.value)&&x.value>=-10000&&x.value<=10000);$('formTotal').textContent=valid?`${items.reduce((n,x)=>n+x.value,0)} egg`:'Kontroller antall'}
 function openCategoryEditor(){
+  if(!categoriesReady){msg('Vent til eggtypene er hentet.');return}
   const panel=$('manageCategories');panel.hidden=false;
   const root=$('manageCategoryRows');root.replaceChildren();
-  categories.forEach(c=>appendManageRow(c.name,c.color,saleFlags[c.name]!==false));
+  categories.forEach(c=>appendManageRow(c.name,c.color,saleFlags[c.name]!==false));if(!categories.length)appendManageRow();
   panel.scrollIntoView({behavior:'smooth',block:'nearest'})
 }
 function appendManageRow(name='',color='#a7bfa9',sell=true){
@@ -139,23 +140,24 @@ $('manageCategoriesButton').onclick=()=>{$('manageCategories').hidden?openCatego
 $('addCategoryButton').onclick=()=>appendManageRow();
 $('cancelCategoriesButton').onclick=()=>$('manageCategories').hidden=true;
 $('saveCategoriesButton').onclick=async()=>{
-  if(!user||!house||!saleReady){msg("Vent til hønseholdets innstillinger er hentet.");return}
+  if(!user||!house||!saleReady||!categoriesReady){msg("Vent til hønseholdets innstillinger er hentet.");return}
   const next=Array.from($('manageCategoryRows').children).map(row=>({name:row.querySelector('input[type=text]').value.trim(),color:row.querySelector('input[type=color]').value}));
   if(next.length>30||next.some(c=>!c.name||c.name.length>60)||new Set(next.map(c=>c.name.toLocaleLowerCase('nb'))).size!==next.length){msg('Velg 0–30 eggtyper med forskjellige navn (maks 60 tegn).');return}
   if(readCounts().some(c=>c.value!==0)){msg('Lagre eggregistreringen før du endrer eggtypene.');return}
-  const button=$('saveCategoriesButton');button.disabled=true;
-  try{const flags=Object.fromEntries(Array.from($('manageCategoryRows').children).map(row=>[row.querySelector('input[type=text]').value.trim(),row.querySelector('input[type=checkbox]').checked]));const batch=writeBatch(db);batch.set(doc(db,'users',user.uid),{categories:next},{merge:true});if(next.length)batch.set(doc(db,'henhouses',house.id),{saleFlags:flags},{merge:true});await batch.commit();categories=next;drawCategories();renderTodayBreakdown();$('manageCategories').hidden=true;msg('Eggtyper og farger er lagret.',true)}
+  const version=session;const button=$('saveCategoriesButton');button.disabled=true;
+  try{const flags=Object.fromEntries(Array.from($('manageCategoryRows').children).map(row=>[row.querySelector('input[type=text]').value.trim(),row.querySelector('input[type=checkbox]').checked]));const batch=writeBatch(db);batch.set(doc(db,'users',user.uid),{categories:next},{merge:true});if(next.length)batch.set(doc(db,'henhouses',house.id),{saleFlags:flags},{merge:true});await batch.commit();if(version!==session)return;categories=next;drawCategories();renderTodayBreakdown();$('manageCategories').hidden=true;msg('Eggtyper og farger er lagret.',true)}
   catch(e){msg('Kunne ikke lagre eggtypene: '+e.code)}finally{button.disabled=false}
 };
 function listenSettings(activeUser){
   if(unsubscribeSettings)unsubscribeSettings();
+  const version=session;
   unsubscribeSettings=onSnapshot(doc(db,'users',activeUser.uid),snap=>{
-    if(auth.currentUser?.uid!==activeUser.uid)return;
+    if(version!==session||auth.currentUser?.uid!==activeUser.uid)return;
     if(JSON.stringify([snap.data()?.standardKg,snap.data()?.orderPrices,snap.data()?.feedUnits,snap.data()?.customProducts])!==settingsSignature){settingsSignature=JSON.stringify([snap.data()?.standardKg,snap.data()?.orderPrices,snap.data()?.feedUnits,snap.data()?.customProducts]);applyDefaults(snap.data())}const saved=snap.data()?.categories;
     if(Array.isArray(saved)&&saved.length<=30&&saved.every(c=>typeof c.name==='string'&&typeof c.color==='string'&&/^#[0-9a-fA-F]{6}$/.test(c.color))){
-      categories=saved;drawCategories();renderTodayBreakdown()
-    }
-  },e=>msg('Kunne ikke hente eggtyper: '+e.code))
+      const changed=!categoriesReady||JSON.stringify(categories)!==JSON.stringify(saved);categoriesReady=true;categories=saved;if(changed){drawCategories();renderTodayBreakdown()}
+    }else if(!snap.metadata.fromCache && saved===undefined){const changed=!categoriesReady||categories.length>0;categoriesReady=true;categories=[];if(changed){drawCategories();renderTodayBreakdown()}}
+  },e=>{if(version===session)msg('Kunne ikke hente eggtyper: '+e.code)})
 }
 function renderTodayBreakdown(){
   const root=$('todayBreakdown');root.replaceChildren();
@@ -240,9 +242,9 @@ $('loginButton').onclick=async()=>{const btn=$('loginButton');btn.disabled=true;
 $('registerButton').onclick=async()=>{if(!registering){authMode(true);return}const email=$('email').value.trim(),password=$('password').value;if(!email||!$('email').checkValidity()){authNotice('Skriv inn en gyldig e-postadresse.');return}if(password.length<6){authNotice('Passordet må ha minst 6 tegn.');return}if(password!==$('confirmPassword').value){authNotice('Passordene er ikke like.');return}const btn=$('registerButton');btn.disabled=true;try{await setPersistence(auth,$('rememberMe').checked?browserLocalPersistence:browserSessionPersistence);const credential=await createUserWithEmailAndPassword(auth,email,password);await setDoc(doc(db,'users',credential.user.uid),{categories:[]},{merge:true});authMode(false)}catch(e){authNotice(authError(e))}finally{btn.disabled=false}};
 $('resetPasswordButton').onclick=async()=>{const email=$('email').value.trim();if(!email||!$('email').checkValidity()){authNotice('Skriv inn e-postadressen din først.');return}const btn=$('resetPasswordButton');btn.disabled=true;try{await sendPasswordResetEmail(auth,email);authNotice('Hvis adressen er registrert, får du en e-post for å endre passord.')}catch(e){authNotice(e.code==='auth/user-not-found'?'Hvis adressen er registrert, får du en e-post for å endre passord.':authError(e))}finally{btn.disabled=false}};
 $('logout').onclick=async()=>{if([...syncStates.values()].some(x=>x.pending)){msg('Vent til registreringene er synkronisert før du logger ut.');return}try{await signOut(auth)}catch(e){msg('Kunne ikke logge ut: '+e.code)}};
-onAuthStateChanged(auth,async current=>{const version=++session;resetView();user=current;if(!current){authMode(false);$('loginCard').hidden=false;return}$('logout').hidden=false;$('accountEmail').textContent=current.email||'Ingen e-postadresse';categories=defaults.map(c=>({...c}));settingsSignature='';applyDefaults(null);drawCategories();listenSettings(current);await loadHouse(current,version)});
+onAuthStateChanged(auth,async current=>{const version=++session;resetView();user=current;if(!current){authMode(false);$('loginCard').hidden=false;return}$('logout').hidden=false;$('accountEmail').textContent=current.email||'Ingen e-postadresse';categories=[];categoriesReady=false;settingsSignature='';applyDefaults(null);drawCategories();listenSettings(current);await loadHouse(current,version)});
 $('createHouseButton').onclick=async()=>{if(!user||house)return;const name=$('houseName').value.trim();if(!name||name.length>100){msg('Skriv inn navn på hønseholdet.');return}const activeUser=user,version=session,button=$('createHouseButton');button.disabled=true;try{const ref=await addDoc(collection(db,'henhouses'),{name,ownerId:activeUser.uid,members:[activeUser.uid],createdAt:serverTimestamp()});if(version!==session)return;house={id:ref.id,name};$('createHouse').hidden=true;$('houseTitle').textContent=name;$('overviewHouseTitle').textContent=name;$('appContent').hidden=false;msg('Hønseholdet er opprettet.',true);listenEggs(ref.id);listenFeed(ref.id);listenOrders(ref.id);listenExtras(ref.id)}catch(e){msg('Kunne ikke opprette hønsehold: '+e.code)}finally{button.disabled=false}};
-$('saveEggButton').onclick=async()=>{if(!user||!house)return;if(!saleReady){msg('Vent til salgslagerinnstillingene er bekreftet på nett.');return}const date=$('eggDate').value;const counts=readCounts();if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){msg('Velg en gyldig dato.');return}if(counts.some(x=>x.raw===''||!Number.isInteger(x.value)||x.value< -10000||x.value>10000)){msg('Antall må være hele tall fra −10000 til 10000.');return}const selected=counts.filter(x=>x.value!==0);if(!selected.length){msg('Skriv inn et antall som ikke er null før du lagrer.');return}const negative=selected.filter(x=>x.value<0);if(negative.length){const detail=negative.map(x=>`${x.name}: ${x.value}`).join('\n');if(!confirm(`Du er i ferd med å trekke fra egg:\n\n${detail}\n\nVil du lagre denne korrigeringen?`))return}const button=$('saveEggButton');button.disabled=true;try{const batch=writeBatch(db);for(const item of selected){const ref=doc(collection(db,'henhouses',house.id,'eggs'));batch.set(ref,{date,category:item.name,count:item.value,saleEligible:saleFlags[item.name]!==false,createdBy:user.uid,createdAt:serverTimestamp()})}await batch.commit();for(let i=0;i<categories.length;i++)$(`cat-${i}`).value='0';updateTotal();msg(`${selected.reduce((n,x)=>n+x.value,0)} egg netto registrert!`,true)}catch(e){msg('Kunne ikke lagre egg: '+e.code)}finally{button.disabled=false}};
+$('saveEggButton').onclick=async()=>{if(!user||!house||!categoriesReady)return;if(!saleReady){msg('Vent til salgslagerinnstillingene er bekreftet på nett.');return}const date=$('eggDate').value;const counts=readCounts();if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){msg('Velg en gyldig dato.');return}if(counts.some(x=>x.raw===''||!Number.isInteger(x.value)||x.value< -10000||x.value>10000)){msg('Antall må være hele tall fra −10000 til 10000.');return}const selected=counts.filter(x=>x.value!==0);if(!selected.length){msg('Skriv inn et antall som ikke er null før du lagrer.');return}const negative=selected.filter(x=>x.value<0);if(negative.length){const detail=negative.map(x=>`${x.name}: ${x.value}`).join('\n');if(!confirm(`Du er i ferd med å trekke fra egg:\n\n${detail}\n\nVil du lagre denne korrigeringen?`))return}const button=$('saveEggButton');button.disabled=true;try{const batch=writeBatch(db);for(const item of selected){const ref=doc(collection(db,'henhouses',house.id,'eggs'));batch.set(ref,{date,category:item.name,count:item.value,saleEligible:saleFlags[item.name]!==false,createdBy:user.uid,createdAt:serverTimestamp()})}await batch.commit();for(let i=0;i<categories.length;i++)$(`cat-${i}`).value='0';updateTotal();msg(`${selected.reduce((n,x)=>n+x.value,0)} egg netto registrert!`,true)}catch(e){msg('Kunne ikke lagre egg: '+e.code)}finally{button.disabled=false}};
 
 // Fôrlager: alle bevegelser lagres som egne dokumenter. Ingen data slettes ved korreksjon.
 const feedNumber=new Intl.NumberFormat('nb-NO',{maximumFractionDigits:2});
@@ -347,5 +349,38 @@ $('checkStorage').onclick=async()=>{try{const e=await navigator.storage.estimate
 $('exportBackup').onclick=async()=>{if(!house||!user)return;const btn=$('exportBackup'),uid=user.uid,hid=house.id,v=session;btn.disabled=true;$('backupStatus').textContent='Henter bekreftede data fra Firebase …';try{const names=['eggs','feed','orders','stock','flock','finance'];const [h,u,...sets]=await Promise.all([getDocFromServer(doc(db,'henhouses',hid)),getDocFromServer(doc(db,'users',uid)),...names.map(n=>getDocsFromServer(collection(db,'henhouses',hid,n)))]);if(v!==session||!h.exists()||[h,u,...sets].some(x=>x.metadata.hasPendingWrites||x.metadata.fromCache))throw Error('Data er ikke bekreftet.');const encode=x=>JSON.parse(JSON.stringify(x));const backup={format:'VERP-backup',version:1,exportedAt:new Date().toISOString(),project:firebaseConfig.projectId,house:{id:hid,data:encode(h.data())},userSettings:{id:uid,data:u.exists()?encode(u.data()):null},collections:Object.fromEntries(names.map((n,i)=>[n,sets[i].docs.map(d=>({id:d.id,data:encode(d.data())}))]))};const blob=new Blob([JSON.stringify(backup)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='VERP-sikkerhetskopi-'+dateLocal()+'.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);$('backupStatus').textContent='Eksport opprettet. Kontroller at filen er lagret på enheten.'}catch(e){$('backupStatus').textContent='Eksport mislyktes. Ingen data er endret. '+(e.code||e.message)}finally{btn.disabled=false}};
 
 </script>
-</body>
+<script>
+// Select existing values on entry, including dynamically generated fields.
+(() => {
+  const cleared = new WeakSet();
+  const eligible = el => el instanceof HTMLTextAreaElement ||
+    (el instanceof HTMLInputElement && ['number','text','email','tel','search','url'].includes(el.type));
+  document.addEventListener('focusin', event => {
+    const el = event.target;
+    if (!eligible(el) || el.readOnly || el.disabled) return;
+    if (el.type === 'number' && el.value !== '' && Number(el.value) === 0) {
+      cleared.add(el);
+      el.value = '';
+      return;
+    }
+    if (el.value) {
+      const select = () => { if (document.activeElement === el) { try { el.select(); } catch (_) {} } };
+      select();
+      requestAnimationFrame(select);
+    }
+  });
+  document.addEventListener('focusout', event => {
+    const el = event.target;
+    if (!cleared.has(el)) return;
+    cleared.delete(el);
+    if (el.value === '') {
+      el.value = '0';
+      el.dispatchEvent(new Event('input', {bubbles:true}));
+    }
+  });
+})();
+</script>
+<script>if ('serviceWorker' in navigator && window.top === window.self) navigator.serviceWorker.register('/sw.js').catch(console.warn);
+if (!matchMedia('(display-mode: standalone)').matches && !navigator.standalone) document.getElementById('installCard').hidden=false;
+</script></body>
 </html>
